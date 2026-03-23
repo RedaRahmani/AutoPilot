@@ -26,3 +26,4 @@ backend/*.egg-info/
 node_modules/
 dist/
 __pycache__/
+.env.example

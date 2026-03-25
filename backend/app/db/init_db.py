@@ -2,23 +2,22 @@ from __future__ import annotations
 
 import asyncio
 
-from passlib.context import CryptContext
 from sqlalchemy import select
 
+from app.core.config import get_settings
+from app.core.security import hash_password, normalize_email
 from app.db.session import AsyncSessionLocal
 from app.models import User, Workflow
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+settings = get_settings()
 
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-async def seed_workflows() -> None:
+async def seed_workflows() -> int:
     async with AsyncSessionLocal() as session:
         existing = await session.execute(select(Workflow))
-        existing_workflows = {workflow.slug: workflow for workflow in existing.scalars().all()}
+        existing_workflows = {
+            workflow.slug: workflow for workflow in existing.scalars().all()
+        }
 
         workflows_to_create = [
             Workflow(
@@ -51,42 +50,56 @@ async def seed_workflows() -> None:
             ),
         ]
 
-        created_any = False
+        created_count = 0
 
         for workflow in workflows_to_create:
             if workflow.slug not in existing_workflows:
                 session.add(workflow)
-                created_any = True
+                created_count += 1
 
-        if created_any:
+        if created_count:
             await session.commit()
 
+        return created_count
 
-async def seed_admin_user() -> None:
-    async with AsyncSessionLocal() as session:
-        admin_email = "admin@autopilot.local"
 
-        result = await session.execute(
-            select(User).where(User.email == admin_email)
+async def seed_admin_user() -> bool:
+    admin_email = normalize_email(settings.seed_admin_email)
+    admin_password = settings.seed_admin_password
+
+    if not admin_password:
+        raise RuntimeError(
+            "SEED_ADMIN_PASSWORD is required to seed the initial admin user."
         )
+
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(User).where(User.email == admin_email))
         existing_admin = result.scalar_one_or_none()
 
         if existing_admin is None:
             admin_user = User(
                 email=admin_email,
-                hashed_password=hash_password("admin123456"),
+                hashed_password=hash_password(admin_password),
                 full_name="AutoPilot Admin",
                 role="admin",
                 is_active=True,
             )
             session.add(admin_user)
             await session.commit()
+            return True
+
+        return False
 
 
 async def init_db() -> None:
-    await seed_workflows()
-    await seed_admin_user()
-    print("Seed data completed.")
+    workflow_count = await seed_workflows()
+    admin_created = await seed_admin_user()
+
+    print(f"Workflow seed completed. Added {workflow_count} workflow(s).")
+    if admin_created:
+        print("Admin seed completed. Created the initial admin user.")
+    else:
+        print("Admin seed completed. Initial admin user already exists.")
 
 
 if __name__ == "__main__":

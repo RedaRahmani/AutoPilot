@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     service_wait_timeout: int = 60
     service_wait_interval: int = 2
 
+    seed_admin_email: str = "admin@autopilot.local"
+    seed_admin_password: str | None = None
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property

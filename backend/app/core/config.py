@@ -25,8 +25,12 @@ class Settings(BaseSettings):
     service_wait_timeout: int = 60
     service_wait_interval: int = 2
 
-    seed_admin_email: str = "admin@autopilot.local"
+    seed_admin_email: str = "admin@autopilot.dev"
     seed_admin_password: str | None = None
+
+    secret_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -49,3 +53,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+settings = get_settings()

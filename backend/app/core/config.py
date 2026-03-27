@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    upload_dir: str = "/tmp/autopilot_uploads"
+    max_upload_size_bytes: int = 10 * 1024 * 1024  # 10 MiB
+    default_upload_workflow_slug: str = "invoice_processing"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property

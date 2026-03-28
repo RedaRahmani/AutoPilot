@@ -13,8 +13,8 @@ async def test_login_success(client):
     response = await client.post(
         "/auth/login",
         json={
-            "email": settings.SEED_ADMIN_EMAIL,
-            "password": settings.SEED_ADMIN_PASSWORD,
+            "email": settings.seed_admin_email,
+            "password": settings.seed_admin_password,
         },
     )
 
@@ -29,7 +29,7 @@ async def test_login_wrong_password(client):
     response = await client.post(
         "/auth/login",
         json={
-            "email": settings.SEED_ADMIN_EMAIL,
+            "email": settings.seed_admin_email,
             "password": "wrong-password",
         },
     )
@@ -42,8 +42,8 @@ async def test_me_success(client):
     login_response = await client.post(
         "/auth/login",
         json={
-            "email": settings.SEED_ADMIN_EMAIL,
-            "password": settings.SEED_ADMIN_PASSWORD,
+            "email": settings.seed_admin_email,
+            "password": settings.seed_admin_password,
         },
     )
     token = login_response.json()["access_token"]
@@ -55,7 +55,7 @@ async def test_me_success(client):
 
     assert response.status_code == 200
     body = response.json()
-    assert body["email"] == settings.SEED_ADMIN_EMAIL.lower()
+    assert body["email"] == settings.seed_admin_email.lower()
     assert body["role"] == "admin"
     assert body["is_active"] is True
 
@@ -80,8 +80,8 @@ async def test_logout_with_token_returns_204(client):
     login_response = await client.post(
         "/auth/login",
         json={
-            "email": settings.SEED_ADMIN_EMAIL,
-            "password": settings.SEED_ADMIN_PASSWORD,
+            "email": settings.seed_admin_email,
+            "password": settings.seed_admin_password,
         },
     )
     token = login_response.json()["access_token"]
@@ -102,8 +102,8 @@ async def test_expired_token_returns_401(client):
     }
     expired_token = jwt.encode(
         expired_payload,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM,
+        settings.secret_key,
+        algorithm=settings.algorithm,
     )
 
     response = await client.get(
